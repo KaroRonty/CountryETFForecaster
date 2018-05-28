@@ -1,7 +1,7 @@
 # CountryETFForecaster
 Function for making naïve forecasts for country ETFs using Shiller P/E.
 
-The used function is 0.075 * log(CAPE) + 0.2775
+The return forecast function is -0.075 * log(CAPE) + 0.2775.
 
 Left side tells the CAPE levels, rigth side tells the expected returns and the red circle indicates CAPE measurement date.
 
