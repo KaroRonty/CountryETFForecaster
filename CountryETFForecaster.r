@@ -13,14 +13,14 @@ cntr <- function(value = 0, lastcountry = "Indonesia") {
     plotvalues <- function(tick, country, cape, day, trueOrFalse) {
         getSymbols(tick, from = "2013-09-24")
 		
-		# Put index data and dates into separate columns
+	# Put index data and dates into separate columns
         x <- na.approx(data.matrix(as.data.frame(get(tick))))
         t <- as.Date(data.matrix(as.data.frame(index(get(tick)))))
         
-		# Plot adjusted close
+	# Plot adjusted close
         plot(t, x[, 6], type = "l", main = paste(toTitleCase(country), tick, sep = ", "), xlab = "", 
             ylab = "")
-		# Add CAPE calculation date to the plot as a red circle
+	# Add CAPE calculation date to the plot as a red circle
         points(day, x[match(day, t), 6], pch = "O", cex = 1.5, col = "red")
         
         if (trueOrFalse == 0) {
@@ -55,7 +55,7 @@ cntr <- function(value = 0, lastcountry = "Indonesia") {
     
     if (value >= 1) {
         i <- 0
-		# capes.csv must contain country names, ETF tickers and CAPEs for each country
+	# capes.csv must contain country names, ETF tickers and CAPEs for each country
         csv <- read.csv("capes.csv", header = FALSE, colClasses = c("character", "character", "numeric"), 
             fileEncoding = "UTF-8-BOM")
         countries <- csv[[1]]
@@ -65,7 +65,7 @@ cntr <- function(value = 0, lastcountry = "Indonesia") {
             tick <- ticks[i]
             country <- countries[i]
             cape <- capes[i]
-			# Hardcoded date when the CAPEs were calculated
+		# Hardcoded date when the CAPEs were calculated
             day <- as.Date("2018-03-29")
             if (capes[i] == 0) {
                 trueOrFalse <- 1
