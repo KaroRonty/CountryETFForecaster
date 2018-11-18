@@ -1,6 +1,7 @@
 library(scales) # Percentage formatting
 library(quantmod) # Getting financial data
 library(tidyverse) # Data wrangling, rownames_to_columns
+library(PerformanceAnalytics) # Drawdown calculations
 
 # Input CAPE calculation date
 date_cape <- as.Date("2018-10-31")
@@ -56,7 +57,7 @@ disp <- function(){
       
       # Find the value of CAPE measurement date
       cape_value <- data[which.min(abs(as.Date(data$rowname) - date_cape)),
-                        which(colnames(data) == ticker)]
+                         which(colnames(data) == ticker)]
       
       # Find the levels which to calculate CAPE from
       max_value <- max(get(ticker)[, 2])
@@ -68,12 +69,38 @@ disp <- function(){
       pre_values_max <- tail(pre_values_max, -1)
       pre_values_min <- tail(pre_values_min, -1)
       # Calculate max and min CAPEs and corresponding returns
+      max_cape <- NA
+      min_cape <- NA
+      max_estimate <- NA
+      min_estimate <- NA
       for(j in 1:10){
         max_cape[j] <- round(cape * 1.1 ^ j, 2)
         min_cape[j] <- round(cape * 0.9 ^ j, 2)
         max_estimate[j] <- round(-0.075 * log(max_cape[j]) + 0.2775, 3)
         min_estimate[j] <- round(-0.075 * log(min_cape[j]) + 0.2775, 3)
       }
+      
+      # Prepare for drawdown calculation
+      sample <- as.data.frame(cbind(data[, 1], as.numeric(data[, i + 1])), stringsAsFactors = F)
+      colnames(sample) <- c("dates", "data")
+      sample <- column_to_rownames(sample, "dates")
+      sample$data <- as.numeric(sample$data)
+      # Calculate returns for drawdown calculation
+      sample$returns <- sample$data / lag(sample$data, 1) - 1
+      data_returns <- sample$data
+      sample$data <- NULL
+      sample[, 2] <- Drawdowns(sample)
+      colnames(sample) <- c("returns", "dd")
+      sample <- cbind(sample, data_returns)
+      # Drawdowns that are between 20 and 50 percent
+      over_20 <- sample %>% rownames_to_column("dates") %>% filter(dd < -0.2 & dd > -0.5)
+      over_20$dates_end <- as.Date(over_20$dates) + 3
+      if(nrow(over_20) > 0){over_20$t <- "a"}
+      # Drawdowns that are over 50 percent negative
+      over_50 <- sample %>% rownames_to_column("dates") %>% filter(dd < -0.5)
+      over_50$dates_end <- as.Date(over_50$dates) + 3
+      if(nrow(over_50) > 0){over_50$t <- "b"}
+      rect <- rbind(over_50, over_20)
       
       # Plot
         gg <- ggplot(data, aes(x = as.Date(rowname), y = get(ticker))) +
@@ -87,6 +114,7 @@ disp <- function(){
           # CAPE and return estimate for the CAPE calculation date
           annotate("text", as.Date("2013-12-31"), cape_value * 1.02,
                    label = paste0(cape, ", ", percent(return_estimate)), color = "Blue") +
+          # Max values CAPE values and return estimates
           annotate("text", as.Date("2013-12-31"), pre_values_max[1] * 1.02,
                    label = paste0(max_cape[1], ", ", percent(max_estimate[1])), color = "Blue") +
           annotate("text", as.Date("2013-12-31"), pre_values_max[2] * 1.02 ^ 1,
@@ -97,6 +125,17 @@ disp <- function(){
                    label = paste0(max_cape[4], ", ", percent(max_estimate[4])), color = "Blue") +
           annotate("text", as.Date("2013-12-31"), pre_values_max[5] * 1.02,
                    label = paste0(max_cape[5], ", ", percent(max_estimate[5])), color = "Blue") +
+          annotate("text", as.Date("2013-12-31"), pre_values_max[6] * 1.02,
+                   label = paste0(max_cape[6], ", ", percent(max_estimate[6])), color = "Blue") +
+          annotate("text", as.Date("2013-12-31"), pre_values_max[7] * 1.02 ^ 1,
+                   label = paste0(max_cape[7], ", ", percent(max_estimate[7])), color = "Blue") +
+          annotate("text", as.Date("2013-12-31"), pre_values_max[8] * 1.02,
+                   label = paste0(max_cape[8], ", ", percent(max_estimate[8])), color = "Blue") +
+          annotate("text", as.Date("2013-12-31"), pre_values_max[9] * 1.02,
+                   label = paste0(max_cape[9], ", ", percent(max_estimate[9])), color = "Blue") +
+          annotate("text", as.Date("2013-12-31"), pre_values_max[10] * 1.02,
+                   label = paste0(max_cape[10], ", ", percent(max_estimate[10])), color = "Blue") +
+          # Min values CAPE values and return estimates
           annotate("text", as.Date("2013-12-31"), pre_values_min[1] * 1.02,
                    label = paste0(min_cape[1], ", ", percent(min_estimate[1])), color = "Blue") +
           annotate("text", as.Date("2013-12-31"), pre_values_min[2] * 1.02,
@@ -107,11 +146,28 @@ disp <- function(){
                    label = paste0(min_cape[4], ", ", percent(min_estimate[4])), color = "Blue") +
           annotate("text", as.Date("2013-12-31"), pre_values_min[5] * 1.02,
                    label = paste0(min_cape[5], ", ", percent(min_estimate[5])), color = "Blue") +
+          annotate("text", as.Date("2013-12-31"), pre_values_min[6] * 1.02,
+                   label = paste0(min_cape[6], ", ", percent(min_estimate[6])), color = "Blue") +
+          annotate("text", as.Date("2013-12-31"), pre_values_min[7] * 1.02,
+                   label = paste0(min_cape[7], ", ", percent(min_estimate[7])), color = "Blue") +
+          annotate("text", as.Date("2013-12-31"), pre_values_min[8] * 1.02,
+                   label = paste0(min_cape[8], ", ", percent(min_estimate[8])), color = "Blue") +
+          annotate("text", as.Date("2013-12-31"), pre_values_min[9] * 1.02,
+                   label = paste0(min_cape[9], ", ", percent(min_estimate[9])), color = "Blue") +
+          annotate("text", as.Date("2013-12-31"), pre_values_min[10] * 1.02,
+                   label = paste0(min_cape[10], ", ", percent(min_estimate[10])), color = "Blue") +
           # Min values hlines
           geom_hline(yintercept = pre_values_min, col = "Green", size = 1) +
           ggtitle(paste0(country, ", ", ticker)) +
-          xlab("Date") + ylab("Index")
+          xlab("Date") + ylab("")
+        
+        if(nrow(rect) > 0){
+          gg <- gg + 
+            geom_rect(data = rect, inherit.aes = F, aes(xmin = as.Date(dates), xmax = dates_end,
+                                                      ymin = data_returns * 1.1,
+                                                      ymax = data_returns,
+                                                      fill = t), alpha = 0.25)
+        }
         print(gg)
-        Sys.sleep(0.1)
     }
 }
