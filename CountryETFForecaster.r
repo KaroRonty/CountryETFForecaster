@@ -116,7 +116,7 @@ disp <- function() {
         x = as.Date("2013-12-31"),
         y = pre_values_max,
         text = paste0(
-          max_cape[1:length(pre_values_max)], ", ",
+          format(round(max_cape[1:length(pre_values_max)], 1), nsmall = 1), ", ",
           percent(max_estimate[1:length(pre_values_max)])
         )
       )
@@ -127,7 +127,7 @@ disp <- function() {
         x = as.Date("2013-12-31"),
         y = pre_values_min,
         text = paste0(
-          min_cape[1:length(pre_values_min)], ", ",
+          format(round(min_cape[1:length(pre_values_min)], 1), nsmall = 1), ", ",
           percent(min_estimate[1:length(pre_values_min)])
         )
       )
@@ -143,7 +143,8 @@ disp <- function() {
     geom_hline(yintercept = pre_values_max, col = "Red", size = 1) +
     # CAPE and return estimate for the CAPE calculation date
     annotate("text", as.Date("2013-12-31"), cape_value * 1.02,
-    label = paste0(cape, ", ", percent(return_estimate)), color = "Blue") +
+    label = paste0(format(round(cape, 1), nsmall = 1), ", ",
+    percent(return_estimate)), color = "Blue") +
     # Min values hlines
     geom_hline(yintercept = pre_values_min, col = "Green", size = 1) +
     ggtitle(paste0(country, ", ", ticker)) +
