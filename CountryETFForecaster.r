@@ -159,7 +159,9 @@ disp <- function(){
           # Min values hlines
           geom_hline(yintercept = pre_values_min, col = "Green", size = 1) +
           ggtitle(paste0(country, ", ", ticker)) +
-          xlab("Date") + ylab("")
+          guides(fill=FALSE) +
+          xlab("Date") + ylab("") + 
+          theme_light()
         
         if(nrow(rect) > 0){
           gg <- gg + 
