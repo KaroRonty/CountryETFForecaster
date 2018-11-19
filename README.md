@@ -9,4 +9,4 @@ The closer the forecast is to the current date, the more accurate it is as CAPE 
 
 Input: [Country, Ticker, CAPE] without headings.
 
-![Brazil](https://github.com/KaroRonty/CountryETFForecaster/blob/master/brazil.PNG)
+![Brazil](https://github.com/KaroRonty/CountryETFForecaster/blob/master/ewz.PNG)
