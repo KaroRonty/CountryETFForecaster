@@ -49,6 +49,9 @@ for (i in 1:nrow(countries)) {
   }
 }
 
+# Remove possible duplicates
+data <- data[!duplicated(data$rowname), ]
+
 disp <- function() {
   for (i in 1:nrow(countries)) {
     ticker <- as.character(countries$Ticker[i])
@@ -145,6 +148,9 @@ disp <- function() {
     annotate("text", as.Date("2013-12-31"), cape_value * 1.02,
     label = paste0(format(round(cape, 1), nsmall = 1), ", ",
     percent(return_estimate)), color = "Blue") +
+    # Drawdown markers
+    geom_hline(yintercept = max(sample[, 3], na.rm = T) * 0.8, col = "#F8776D", size = 1) +
+    geom_hline(yintercept = max(sample[, 3], na.rm = T) * 0.5, col = "#00BFC4", size = 1) +
     # Min values hlines
     geom_hline(yintercept = pre_values_min, col = "Green", size = 1) +
     ggtitle(paste0(country, ", ", ticker)) +
