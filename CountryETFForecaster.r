@@ -4,7 +4,7 @@ library(tidyverse) # Data wrangling, rownames_to_columns
 library(PerformanceAnalytics) # Drawdown calculations
 
 # Input CAPE calculation date
-date_cape <- as.Date("2018-10-31")
+date_cape <- as.Date("2018-11-30")
 
 # Read CAPE values from csv & combine with countries and tickers
 capes <- read.csv("capes.csv", header = F)
@@ -49,8 +49,9 @@ for (i in 1:nrow(countries)) {
   }
 }
 
-# Remove possible duplicates
+# Remove possible duplicates and NA rows
 data <- data[!duplicated(data$rowname), ]
+data <- na.omit(data)
 
 disp <- function() {
   for (i in 1:nrow(countries)) {
@@ -67,8 +68,8 @@ disp <- function() {
       ]
     
     # Find the levels which to calculate CAPE from
-    max_value <- max(get(ticker)[, 2])
-    min_value <- min(get(ticker)[, 2])
+    max_value <- max(get(ticker)[, 2], na.rm = T)
+    min_value <- min(get(ticker)[, 2], na.rm = T)
     # Calculate max 10 values for vertical lines
     pre_values_max <- cumprod(c(cape_value, rep(1.1, log(max_value / cape_value) / log(1.1))))
     pre_values_min <- cumprod(c(cape_value, rep(0.9, log(min_value / cape_value) / log(0.9))))
