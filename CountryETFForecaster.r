@@ -2,9 +2,10 @@ library(scales) # Percentage formatting
 library(quantmod) # Getting financial data
 library(tidyverse) # Data wrangling, rownames_to_columns
 library(PerformanceAnalytics) # Drawdown calculations
+options("getSymbols.yahoo.warning"=FALSE)
 
 # Input CAPE calculation date
-date_cape <- as.Date("2018-11-30")
+date_cape <- as.Date("2018-12-31")
 
 # Read CAPE values from csv & combine with countries and tickers
 capes <- read.csv("capes.csv", header = F)
