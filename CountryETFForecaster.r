@@ -12,6 +12,7 @@ date_cape <- as.Date("2018-12-31")
 
 # Read CAPE values from csv & combine with countries and tickers
 capes <- read.csv("capes.csv", header = F)
+colnames(capes)[1] <- "Country"
 
 countries <- data.frame(
   c("Greece", "Russia", "Ireland", "Argentina", "Italy", "Austria", "Portugal",
@@ -29,29 +30,10 @@ countries <- data.frame(
 )
 
 colnames(countries) <- c("Country", "Ticker")
-colnames(capes)[1] <- "Country"
 
 # Join & rename
 countries <- full_join(countries, capes)
 colnames(countries)[4] <- "CAPE"
-
-# Get historical CAPE values from Barclays & rename
-historical <- read.csv("capes_historical.csv", fileEncoding = "UTF-8-BOM")
-colnames(historical) <- c("Date", "Australia", "Brazil", "Canada", "China",
-                          "Europe", "France", "Germany", "Hong Kong", "Italy",
-                          "India", "Israel", "Japan", "South Korea", "Mexico",
-                          "Netherlands", "Poland", "Russia", "Singapore",
-                          "South Africa", "Spain", "Sweden", "Switzerland",
-                          "Taiwan", "Turkey", "United Kingdom", "USA")
-
-historical$Date <- dmy(historical$Date)
-
-# Calculate return forecasts for each observation and add them to the value
-combine <- function(x) {
-  paste0(format(round(x, 1), nsmall = 1), ", ",
-         format(percent(round(-0.075 * log(x) + 0.2775, 3)), nsmall = 1))
-}
-historical[, 2:ncol(historical)] <- apply(historical[, 2:ncol(historical)], 2, combine)
 
 
 data <- as.data.frame(NULL)
@@ -159,29 +141,6 @@ disp <- function() {
       )
     } else min_df <- NA
     
-    # Add historical CAPEs and return forecasts
-    if(country %in% colnames(historical)){
-       historical_sample <- historical %>% 
-        select(Date, country)
-      
-      # Find the closest trading date for each month end date
-      find_min_date <- function(x){
-        date_diff <- abs(x - as.Date(rownames(sample)))
-        if(min(date_diff > 5, na.rm = T)){return(NA)}
-        return(rownames(sample)[which.min(date_diff)])
-      }
-      
-      # Replace month end dates with dates that have actual index data
-      historical_sample$Date <- sapply(historical_sample[, 1], find_min_date)
-      historical_sample <- na.omit(historical_sample)
-      
-      # Add index values to data frame
-      historical_sample$Index <- sample[na.omit(match(historical_sample$Date,
-                                                      rownames(sample))), 3]
-      
-      colnames(historical_sample) <- c("Date", "Label", "Index")
-    }
-    
     p <- 'ggplot(data, aes(x = as.Date(rowname), y = get(ticker))) +
     geom_line() +
     # CAPE calulation date vline
@@ -203,12 +162,6 @@ disp <- function() {
     guides(fill=FALSE) +
     xlab("Date") + ylab("") + 
     theme_light()'
-
-
-    if(country %in% colnames(historical)){
-    p <- paste(p, '+ geom_text_repel(data = historical_sample,
-               aes(x = as.Date(Date), y = Index, label = Label))')
-    }
     
     # Loop max annotations
     if(!is.null(nrow(max_df))){
