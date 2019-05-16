@@ -1,5 +1,5 @@
 library(scales) # Percentage formatting
-library(ggrepe) # Preventing overlapping in plots
+library(ggrepel) # Preventing overlapping in plots
 library(quantmod) # Getting financial data
 library(lubridate) # Handling dates
 library(tidyverse) # Data wrangling, rownames_to_columns
@@ -8,7 +8,7 @@ options("getSymbols.yahoo.warning"=FALSE)
 options("getSymbols.warning4.0"=FALSE)
 
 # Input CAPE calculation date
-date_cape <- as.Date("2018-12-31")
+date_cape <- as.Date("2019-03-29")
 
 # Read CAPE values from csv & combine with countries and tickers
 capes <- read.csv("capes.csv", header = F)
@@ -58,7 +58,7 @@ data <- data[!duplicated(data$rowname), ]
 data <- na.omit(data)
 
 disp <- function() {
-  for (i in 1:nrow(countries)) {
+  for (i in 2:10) {
     ticker <- as.character(countries$Ticker[i])
     # Get country name & CAPE returns estimate from ticker
     country <- as.character(countries$Country[which(countries$Ticker == ticker)])
@@ -90,6 +90,8 @@ disp <- function() {
       min_cape[j] <- round(cape * 0.9^j, 2)
       max_estimate[j] <- round(-0.075 * log(max_cape[j]) + 0.2775, 3)
       min_estimate[j] <- round(-0.075 * log(min_cape[j]) + 0.2775, 3)
+      max_estimate <- ifelse(max_estimate == Inf, 0, max_estimate)
+      min_estimate <- ifelse(min_estimate == Inf, 0, min_estimate)
     }
     
     # Prepare for drawdown calculation
