@@ -58,7 +58,7 @@ data <- data[!duplicated(data$rowname), ]
 data <- na.omit(data)
 
 disp <- function() {
-  for (i in 2:10) {
+  for (i in 2:nrow(countries)) {
     ticker <- as.character(countries$Ticker[i])
     # Get country name & CAPE returns estimate from ticker
     country <- as.character(countries$Country[which(countries$Ticker == ticker)])
