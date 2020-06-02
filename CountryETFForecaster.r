@@ -4,14 +4,15 @@ library(quantmod) # Getting financial data
 library(lubridate) # Handling dates
 library(tidyverse) # Data wrangling, rownames_to_columns
 library(PerformanceAnalytics) # Drawdown calculations
-options("getSymbols.yahoo.warning"=FALSE)
-options("getSymbols.warning4.0"=FALSE)
+
+options("getSymbols.yahoo.warning" = FALSE)
+options("getSymbols.warning4.0" = FALSE)
 
 # Input CAPE calculation date
-date_cape <- as.Date("2019-03-29")
+date_cape <- as.Date("2020-04-30")
 
 # Read CAPE values from csv & combine with countries and tickers
-capes <- read.csv("capes.csv", header = F)
+capes <- read.csv("capes.csv", header = FALSE)
 colnames(capes)[1] <- "Country"
 
 countries <- data.frame(
@@ -37,6 +38,7 @@ colnames(countries)[4] <- "CAPE"
 
 
 data <- as.data.frame(NULL)
+
 # Put the return data to a data frame
 for (i in 1:nrow(countries)) {
   tick <- as.character(countries$Ticker[i])
@@ -61,7 +63,8 @@ disp <- function() {
   for (i in 2:nrow(countries)) {
     ticker <- as.character(countries$Ticker[i])
     # Get country name & CAPE returns estimate from ticker
-    country <- as.character(countries$Country[which(countries$Ticker == ticker)])
+    country <- as.character(
+      countries$Country[which(countries$Ticker == ticker)])
     cape <- countries$CAPE[which(countries$Ticker == ticker)]
     return_estimate <- round(-0.075 * log(cape) + 0.2775, 3)
     
@@ -72,11 +75,15 @@ disp <- function() {
       ]
     
     # Find the levels which to calculate CAPE from
-    max_value <- max(get(ticker)[, 2], na.rm = T)
-    min_value <- min(get(ticker)[, 2], na.rm = T)
+    max_value <- max(get(ticker)[, 2], na.rm = TRUE)
+    min_value <- min(get(ticker)[, 2], na.rm = TRUE)
     # Calculate max 10 values for vertical lines
-    pre_values_max <- cumprod(c(cape_value, rep(1.1, log(max_value / cape_value) / log(1.1))))
-    pre_values_min <- cumprod(c(cape_value, rep(0.9, log(min_value / cape_value) / log(0.9))))
+    pre_values_max <- cumprod(c(cape_value,
+                                rep(1.1, log(max_value / cape_value) /
+                                      log(1.1))))
+    pre_values_min <- cumprod(c(cape_value,
+                                rep(0.9, log(min_value / cape_value) /
+                                      log(0.9))))
     # Delete first index value
     pre_values_max <- tail(pre_values_max, -1)
     pre_values_min <- tail(pre_values_min, -1)
@@ -95,10 +102,12 @@ disp <- function() {
     }
     
     # Prepare for drawdown calculation
-    sample <- as.data.frame(cbind(data[, 1], as.numeric(data[, i + 1])), stringsAsFactors = F)
+    sample <- as.data.frame(cbind(data[, 1], as.numeric(data[, i + 1])),
+                            stringsAsFactors = FALSE)
     colnames(sample) <- c("dates", "data")
     sample <- column_to_rownames(sample, "dates")
     sample$data <- as.numeric(sample$data)
+    
     # Calculate returns for drawdown calculation
     sample$returns <- sample$data / lag(sample$data, 1) - 1
     data_returns <- sample$data
@@ -106,19 +115,24 @@ disp <- function() {
     sample[, 2] <- Drawdowns(sample)
     colnames(sample) <- c("returns", "dd")
     sample <- cbind(sample, data_returns)
+    
     # Drawdowns that are between 20 and 50 percent
-    over_20 <- sample %>% rownames_to_column("dates") %>% filter(dd < -0.2 & dd > -0.5)
+    over_20 <- sample %>% rownames_to_column("dates") %>%
+      filter(dd < -0.2 & dd > -0.5)
     over_20$dates_end <- as.Date(over_20$dates) + 3
     if (nrow(over_20) > 0) {
-      over_20$t <- "a"
+      over_20$position <- "a"
     }
+    
     # Drawdowns that are over 50 percent negative
-    over_50 <- sample %>% rownames_to_column("dates") %>% filter(dd < -0.5)
+    over_50 <- sample %>% rownames_to_column("dates") %>%
+      filter(dd < -0.5)
     over_50$dates_end <- as.Date(over_50$dates) + 3
     if (nrow(over_50) > 0) {
-      over_50$t <- "b"
+      over_50$position <- "b"
     }
-    rect <- rbind(over_50, over_20)
+    rect <- rbind(over_50, over_20) %>% 
+      mutate(dates = as.Date(dates))
     
     # Add max CAPE values and return estimates to the plot
     if(length(pre_values_max) > 0) {
@@ -126,8 +140,9 @@ disp <- function() {
         x = as.Date("2013-12-31"),
         y = pre_values_max,
         text = paste0(
-          format(round(max_cape[1:length(pre_values_max)], 1), nsmall = 1), ", ",
-          percent(max_estimate[1:length(pre_values_max)])
+          format(round(max_cape[1:length(pre_values_max)], 1), nsmall = 1),
+          ", ",
+          percent(max_estimate[1:length(pre_values_max)], accuracy = 0.01)
         )
       )
     } else max_df <- NA
@@ -137,8 +152,9 @@ disp <- function() {
         x = as.Date("2013-12-31"),
         y = pre_values_min,
         text = paste0(
-          format(round(min_cape[1:length(pre_values_min)], 1), nsmall = 1), ", ",
-          percent(min_estimate[1:length(pre_values_min)])
+          format(round(min_cape[1:length(pre_values_min)], 1), nsmall = 1),
+          ", ",
+          percent(min_estimate[1:length(pre_values_min)], accuracy = 0.01)
         )
       )
     } else min_df <- NA
@@ -154,10 +170,12 @@ disp <- function() {
     # CAPE and return estimate for the CAPE calculation date
     annotate("text", as.Date("2013-12-31"), cape_value * 1.02,
     label = paste0(format(round(cape, 1), nsmall = 1), ", ",
-    percent(return_estimate)), color = "Blue") +
+    percent(return_estimate, accuracy = 0.01)), color = "Blue") +
     # Drawdown markers
-    geom_hline(yintercept = max(sample[, 3], na.rm = T) * 0.8, col = "#F8776D", size = 1) +
-    geom_hline(yintercept = max(sample[, 3], na.rm = T) * 0.5, col = "#00BFC4", size = 1) +
+    geom_hline(yintercept = max(sample[, 3], na.rm = TRUE) * 0.8,
+               col = "#F8776D", size = 1) +
+    geom_hline(yintercept = max(sample[, 3], na.rm = TRUE) * 0.5,
+               col = "#00BFC4", size = 1) +
     # Min values hlines
     geom_hline(yintercept = pre_values_min, col = "Green", size = 1) +
     ggtitle(paste0(country, ", ", ticker)) +
@@ -190,13 +208,22 @@ disp <- function() {
     gg <- eval(parse(text = p))
     
     if (nrow(rect) > 0) {
+      
+      rect <- rect %>% 
+        mutate(run = as.character(
+          cumsum(ifelse(dates - lag(dates) <= 3 | is.na(lag(dates)), 
+                        ifelse(lag(position) == position | 
+                                 is.na(lag(dates)), 0, 1), 1))))
+      
       gg <- gg +
-        geom_rect(data = rect, inherit.aes = F, aes(
-          xmin = as.Date(dates), xmax = dates_end,
+        geom_ribbon(data = rect, inherit.aes = FALSE, aes(
+          x = as.Date(dates),
           ymin = data_returns * 1.1,
           ymax = data_returns,
-          fill = t
-        ), alpha = 0.25)
+          y = data_returns,
+          fill = position,
+          group = as.factor(run)
+        ), alpha = 0.75)
     }
     print(gg)
   }
